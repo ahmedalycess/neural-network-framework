@@ -1,5 +1,3 @@
-from Optimization.Optimizers import Sgd
-from Optimization.Loss import CrossEntropyLoss
 import numpy as np
 from copy import deepcopy
 class NeuralNetwork:
@@ -19,21 +17,26 @@ class NeuralNetwork:
             - tests the network on a given input_tensor
     '''
 
-    def __init__(self, optimizer: Sgd, weights_initializer, bias_initializer) -> None:
+    def __init__(self, optimizer, weights_initializer, bias_initializer) -> None:
         self.optimizer = optimizer
         self.loss: list[float] = []
         self.layers: list = [] 
         self.data_layer = None
-        self.loss_layer: CrossEntropyLoss = None
+        self.loss_layer = None
         self.weights_initializer = weights_initializer
         self.bias_initializer = bias_initializer
     
     def forward(self) -> np.ndarray:
-        input_tensor, self.label_tensor = deepcopy(self.data_layer.next())
+        input_tensor, self.label_tensor = self.data_layer.next()
+        regularizer_loss = 0
         for layer in self.layers:
+            layer.testing_phase = False
             input_tensor = layer.forward(input_tensor)
-        loss = self.loss_layer.forward(input_tensor, deepcopy(self.label_tensor))
-        return loss
+        loss = self.loss_layer.forward(input_tensor, self.label_tensor)
+        if self.optimizer.regularizer is not None:
+            regularizer_loss = self.optimizer.regularizer.norm(loss)
+        
+        return loss + regularizer_loss
     
     def backward(self) -> None:
         label_tensor = deepcopy(self.label_tensor)
@@ -55,6 +58,7 @@ class NeuralNetwork:
     
     def test(self, input_tensor) -> np.ndarray:
         for layer in self.layers:
+            layer.testing_phase = True
             input_tensor = layer.forward(input_tensor)
         return input_tensor
         

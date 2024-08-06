@@ -10,6 +10,9 @@ class FullyConnected(BaseLayer):
 
         self._optimizer = None
         self.gradient_weights = None
+        self.input_size = input_size
+        self.output_size = output_size
+        
     
     @property
     def optimizer(self):
@@ -55,3 +58,12 @@ class FullyConnected(BaseLayer):
         
         error_tensor = np.dot(error_tensor, self.weights[:-1].T)
         return error_tensor
+    
+    def initialize(self, weights_initializer, bias_initializer):
+        '''
+        param weights_initializer: Initializer
+        param bias_initializer: Initializer
+        return None
+        '''
+        self.weights[:, :-1] = weights_initializer.initialize(self.weights[:, :-1].shape, self.input_size, self.output_size)
+        self.weights[:, -1] = bias_initializer.initialize(self.weights[:, -1].shape, 1, self.output_size)

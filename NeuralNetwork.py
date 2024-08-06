@@ -19,12 +19,14 @@ class NeuralNetwork:
             - tests the network on a given input_tensor
     '''
 
-    def __init__(self, optimizer: Sgd) -> None:
+    def __init__(self, optimizer: Sgd, weights_initializer, bias_initializer) -> None:
         self.optimizer = optimizer
         self.loss: list[float] = []
         self.layers: list = [] 
         self.data_layer = None
         self.loss_layer: CrossEntropyLoss = None
+        self.weights_initializer = weights_initializer
+        self.bias_initializer = bias_initializer
     
     def forward(self) -> np.ndarray:
         input_tensor, self.label_tensor = deepcopy(self.data_layer.next())
@@ -42,6 +44,7 @@ class NeuralNetwork:
     def append_layer(self, layer: object) -> None:
         if layer.trainable:
             layer.optimizer = deepcopy(self.optimizer)
+            layer.initialize(self.weights_initializer, self.bias_initializer)
         self.layers.append(layer)
     
     def train(self, iterations: int) -> None:

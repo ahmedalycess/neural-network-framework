@@ -1,28 +1,24 @@
-from Layers.Base import BaseLayer
+from Layers import Base, Initializers
 import numpy as np
 
-class FullyConnected(BaseLayer):
+class FullyConnected(Base.BaseLayer):
     def __init__(self, input_size: int, output_size: int):
 
         super().__init__()
         self.trainable = True
-        self.weights = np.random.uniform(low=0.0, high=1.0, size=(input_size + 1, output_size))
-
+        
         self._optimizer = None
-        self.gradient_weights = None
+        self._gradient_weights = None
+
         self.input_size = input_size
         self.output_size = output_size
-        
-    
-    @property
-    def optimizer(self):
-        return self._optimizer
 
-    @optimizer.setter
-    def optimizer(self, optimizer):
-        if optimizer is None or not hasattr(optimizer, 'calculate_update'):
-            raise ValueError("Please provide an optimizer")
-        self._optimizer = optimizer
+        self._weights = np.zeros((input_size + 1, output_size))
+        self.initialize(Initializers.UniformRandom(), Initializers.UniformRandom())
+
+        self.input = None
+    
+
 
     def forward(self, input_tensor: np.ndarray) -> np.ndarray:
         '''
@@ -35,7 +31,7 @@ class FullyConnected(BaseLayer):
          -reason: a test case required weights to be of shape (input_size + 1, output_size)
         '''
 
-        self.input = np.c_[input_tensor, np.ones((input_tensor.shape[0], 1))]
+        self.input = np.hstack((input_tensor, np.ones((input_tensor.shape[0], 1))))
         output = np.dot(self.input, self.weights)
         return output
 
@@ -65,5 +61,29 @@ class FullyConnected(BaseLayer):
         param bias_initializer: Initializer
         return None
         '''
-        self.weights[:, :-1] = weights_initializer.initialize(self.weights[:, :-1].shape, self.input_size, self.output_size)
-        self.weights[:, -1] = bias_initializer.initialize(self.weights[:, -1].shape, 1, self.output_size)
+        self.weights = weights_initializer.initialize(self.weights.shape, self.input_size, self.output_size)
+        self.weights[-1] = bias_initializer.initialize(self.weights[-1].shape, self.input_size, self.output_size)
+    
+    @property
+    def weights(self):
+        return self._weights
+
+    @weights.setter
+    def weights(self, weights):
+        self._weights = weights
+    
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, optimizer):
+        self._optimizer = optimizer
+    
+    @property
+    def gradient_weights(self):
+        return self._gradient_weights
+    
+    @gradient_weights.setter
+    def gradient_weights(self, gradient_weights):
+        self._gradient_weights = gradient_weights

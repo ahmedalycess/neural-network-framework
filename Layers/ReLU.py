@@ -18,5 +18,4 @@ class ReLU(BaseLayer):
         return self.output
     
     def backward(self, error_tensor: np.ndarray) -> np.ndarray:
-        error_tensor *= (self.output  > 0)
-        return error_tensor
+        return error_tensor * (self.output > 0)
